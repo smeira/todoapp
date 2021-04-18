@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'models/item.dart';
 
 void main() {
@@ -24,12 +26,12 @@ class HomePage extends StatefulWidget {
 
   HomePage() {
     items = [];
-    items.add(Item(title: "Estudar Flutter", done: false));
-    items.add(Item(title: "Estudar SCRUM", done: true));
-    items.add(Item(title: "Lavar roupa", done: false));
-    items.add(Item(title: "Ir ao mercado", done: false));
-    items.add(Item(title: "Preparar o almoço da semana", done: false));
-    items.add(Item(title: "Editar vídeo MobiCast", done: false));
+    // items.add(Item(title: "Estudar Flutter", done: false));
+    // items.add(Item(title: "Estudar SCRUM", done: true));
+    // items.add(Item(title: "Lavar roupa", done: false));
+    // items.add(Item(title: "Ir ao mercado", done: false));
+    // items.add(Item(title: "Preparar o almoço da semana", done: false));
+    // items.add(Item(title: "Editar vídeo MobiCast", done: false));
   }
 
   @override
@@ -47,6 +49,7 @@ class _HomePageState extends State<HomePage> {
         Item(title: newTaskController.text, done: false),
       );
       newTaskController.text = "";
+      save();
     });
   }
 
@@ -54,7 +57,33 @@ class _HomePageState extends State<HomePage> {
   void remove(int index) {
     setState(() {
       widget.items.removeAt(index);
+      save();
     });
+  }
+
+//Lendo os itens do shared_preferences (para persistência)
+  Future load() async {
+    var prefs = await SharedPreferences.getInstance();
+    var data = prefs.getString('data');
+
+    if (data != null) {
+      Iterable decoded = jsonDecode(data);
+      List<Item> result = decoded.map((x) => Item.fromJson(x)).toList();
+      setState(() {
+        widget.items = result;
+      });
+    }
+  }
+
+//Salvando os itens
+  save() async {
+    var prefs = await SharedPreferences.getInstance();
+    await prefs.setString('data', jsonEncode(widget.items));
+  }
+
+//Chamando o construtor
+  _HomePageState() {
+    load();
   }
 
   @override
@@ -87,6 +116,7 @@ class _HomePageState extends State<HomePage> {
               onChanged: (value) {
                 setState(() {
                   item.done = value;
+                  save();
                 });
               },
             ),
